@@ -1,0 +1,989 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#080b14">
+  <title>RunFlow — Running Tracker</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #080b14;
+      --glass: rgba(255,255,255,.075);
+      --border: rgba(255,255,255,.13);
+      --muted: #929bb1;
+      --blue: #73a7ff;
+      --green: #71f5bb;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(ellipse at 10% 0%, #172b50 0, transparent 40%),
+        radial-gradient(ellipse at 100% 40%, #183c38 0, transparent 35%),
+        var(--bg);
+      color: #f7f9ff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      padding: 18px 15px 100px;
+    }
+
+    button, select { font: inherit; }
+
+    .app {
+      max-width: 680px;
+      margin: auto;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 10px 2px 24px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+    }
+
+    .logo {
+      width: 45px;
+      height: 45px;
+      display: grid;
+      place-items: center;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #8bb7ff, #69f0c0);
+      color: #07121c;
+      font-size: 24px;
+      font-weight: 900;
+      box-shadow: 0 5px 28px #67d9c333;
+    }
+
+    h1 { font-size: 22px; margin: 0; letter-spacing: -.7px; }
+    .subtitle { color: var(--muted); font-size: 12px; margin-top: 4px; }
+
+    .status {
+      font-size: 11px;
+      color: var(--green);
+      border: 1px solid #71f5bb44;
+      background: #71f5bb10;
+      border-radius: 99px;
+      padding: 8px 10px;
+    }
+
+    .card {
+      border: 1px solid var(--border);
+      border-radius: 25px;
+      background: var(--glass);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      padding: 20px;
+      margin-bottom: 15px;
+      box-shadow: 0 15px 45px #00000015;
+    }
+
+    .hero {
+      background:
+        radial-gradient(circle at 100% 0%, #7da9ff20, transparent 45%),
+        rgba(255,255,255,.065);
+    }
+
+    .eyebrow {
+      color: var(--muted);
+      font-size: 12px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+    }
+
+    .distance {
+      font-size: clamp(58px, 16vw, 82px);
+      line-height: 1.12;
+      font-weight: 750;
+      letter-spacing: -5px;
+      margin: 12px 0 4px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .distance small {
+      font-size: 18px;
+      letter-spacing: 0;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 9px;
+      margin-top: 22px;
+    }
+
+    .metric {
+      border: 1px solid #ffffff0c;
+      background: #00000018;
+      border-radius: 16px;
+      padding: 14px 9px;
+      min-width: 0;
+    }
+
+    .metric .value {
+      font-size: clamp(17px, 4.5vw, 23px);
+      font-weight: 700;
+      margin-bottom: 6px;
+      font-variant-numeric: tabular-nums;
+      overflow-wrap: anywhere;
+    }
+
+    .metric .label {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 17px;
+    }
+
+    button {
+      cursor: pointer;
+      border: 1px solid var(--border);
+      border-radius: 15px;
+      padding: 14px 12px;
+      color: white;
+      background: #ffffff0d;
+      transition: transform .15s, opacity .15s;
+    }
+
+    button:active { transform: scale(.97); }
+    button:disabled { opacity: .35; cursor: not-allowed; }
+
+    .primary {
+      color: #07121c;
+      border: none;
+      font-weight: 800;
+      background: linear-gradient(120deg, #8bb7ff, #71f5bb);
+    }
+
+    .danger { color: #ff9da9; }
+
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      gap: 10px;
+    }
+
+    h2 { font-size: 17px; margin: 0; }
+    .muted { color: var(--muted); font-size: 12px; }
+
+    .goal-options {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin: 15px 0;
+    }
+
+    .goal {
+      padding: 9px 15px;
+      border-radius: 99px;
+      font-size: 13px;
+    }
+
+    .goal.active {
+      color: #08121d;
+      background: #8bb7ff;
+      border-color: #8bb7ff;
+      font-weight: 750;
+    }
+
+    .progress-track {
+      height: 8px;
+      border-radius: 99px;
+      background: #ffffff13;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #8bb7ff, #71f5bb);
+      transition: width .3s;
+    }
+
+    .progress-labels {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .route {
+      height: 180px;
+      background: #05091270;
+      border-radius: 17px;
+      overflow: hidden;
+      margin-top: 12px;
+    }
+
+    .route svg { width: 100%; height: 100%; }
+
+    .route-note {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 10px;
+    }
+
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 0;
+      border-bottom: 1px solid #ffffff12;
+    }
+
+    .history-item:last-child { border-bottom: 0; }
+    .history-distance { font-size: 20px; font-weight: 750; }
+    .history-date { font-size: 12px; color: var(--muted); margin-top: 5px; }
+    .history-right { text-align: right; font-size: 13px; }
+    .history-right div + div { margin-top: 6px; color: var(--muted); }
+
+    .empty {
+      color: var(--muted);
+      text-align: center;
+      padding: 22px 5px;
+      font-size: 13px;
+    }
+
+    .settings-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+      padding: 13px 0;
+      border-bottom: 1px solid #ffffff12;
+      font-size: 14px;
+    }
+
+    select {
+      background: #18202e;
+      color: white;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 9px;
+      max-width: 140px;
+    }
+
+    .notice {
+      font-size: 12px;
+      line-height: 1.6;
+      color: var(--muted);
+    }
+
+    .notice strong { color: #dce6ff; }
+
+    .tabs {
+      position: fixed;
+      z-index: 10;
+      bottom: max(12px, env(safe-area-inset-bottom));
+      left: 50%;
+      transform: translateX(-50%);
+      width: min(94%, 480px);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 5px;
+      padding: 8px;
+      border: 1px solid #ffffff20;
+      border-radius: 22px;
+      background: #111725dc;
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      box-shadow: 0 10px 40px #0007;
+    }
+
+    .tab {
+      padding: 10px 3px;
+      border: 0;
+      border-radius: 14px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .tab span {
+      display: block;
+      font-size: 19px;
+      margin-bottom: 5px;
+    }
+
+    .tab.active {
+      color: white;
+      background: #ffffff13;
+    }
+
+    .page { display: none; }
+    .page.active { display: block; }
+
+    .big-stat {
+      font-size: 34px;
+      font-weight: 750;
+      margin-top: 8px;
+    }
+
+    .toast {
+      position: fixed;
+      z-index: 20;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      max-width: 90%;
+      background: #1b2638;
+      border: 1px solid var(--border);
+      border-radius: 15px;
+      padding: 12px 17px;
+      font-size: 13px;
+      box-shadow: 0 8px 30px #0006;
+      display: none;
+    }
+
+    @media (min-width: 600px) {
+      body { padding-top: 35px; }
+    }
+  </style>
+</head>
+
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <div class="logo">R</div>
+      <div>
+        <h1>RunFlow</h1>
+        <div class="subtitle">Your run. Your rhythm.</div>
+      </div>
+    </div>
+    <div class="status" id="gpsStatus">● GPS prêt</div>
+  </header>
+
+  <main>
+    <section class="page active" id="page-home">
+      <div class="card hero">
+        <div class="eyebrow">Distance parcourue</div>
+        <div class="distance"><span id="distance">0.00</span><small> km</small></div>
+        <div class="muted" id="runMessage">Prêt pour ta prochaine sortie ?</div>
+
+        <div class="metrics">
+          <div class="metric">
+            <div class="value" id="elapsed">00:00</div>
+            <div class="label">Temps</div>
+          </div>
+          <div class="metric">
+            <div class="value" id="pace">--:--</div>
+            <div class="label">Allure /km</div>
+          </div>
+          <div class="metric">
+            <div class="value" id="speed">0.0</div>
+            <div class="label">km/h</div>
+          </div>
+        </div>
+
+        <div class="controls">
+          <button class="primary" id="startBtn" onclick="startRun()">▶ Démarrer</button>
+          <button id="pauseBtn" onclick="pauseRun()" disabled>Ⅱ Pause</button>
+          <button class="danger" id="finishBtn" onclick="finishRun()" disabled>■ Terminer</button>
+          <button onclick="resetRun()">↺ Réinitialiser</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">
+          <h2>🎯 Objectif de sortie</h2>
+          <span class="muted">Distance</span>
+        </div>
+
+        <div class="goal-options">
+          <button class="goal active" data-goal="1" onclick="setGoal(1)">1 km</button>
+          <button class="goal" data-goal="3" onclick="setGoal(3)">3 km</button>
+          <button class="goal" data-goal="5" onclick="setGoal(5)">5 km</button>
+          <button class="goal" data-goal="10" onclick="setGoal(10)">10 km</button>
+        </div>
+
+        <div class="progress-track">
+          <div class="progress-bar" id="goalBar"></div>
+        </div>
+        <div class="progress-labels">
+          <span id="goalProgress">0 % atteint</span>
+          <span id="goalText">Objectif : 1 km</span>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">
+          <h2>📍 Mon parcours</h2>
+          <span class="muted" id="pointCount">0 points GPS</span>
+        </div>
+
+        <div class="route">
+          <svg viewBox="0 0 340 180" preserveAspectRatio="xMidYMid meet">
+            <defs>
+              <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+                <path d="M24 0H0V24" fill="none" stroke="#ffffff0c" stroke-width="1"/>
+              </pattern>
+              <linearGradient id="routeColor" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#8bb7ff"/>
+                <stop offset="100%" stop-color="#71f5bb"/>
+              </linearGradient>
+            </defs>
+            <rect width="340" height="180" fill="url(#grid)"/>
+            <path id="routeLine" d="" fill="none" stroke="url(#routeColor)"
+                  stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle id="routeDot" cx="170" cy="90" r="5" fill="#71f5bb"
+                    stroke="#ffffff" stroke-width="2" opacity="0"/>
+            <text id="routePlaceholder" x="170" y="91" fill="#929bb1"
+                  text-anchor="middle" font-size="12">Ton parcours apparaîtra ici</text>
+          </svg>
+        </div>
+        <div class="route-note">
+          Aperçu du tracé GPS — ce n'est pas une carte routière.
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">
+          <h2>📅 Cette semaine</h2>
+          <span class="muted">Tes sorties enregistrées</span>
+        </div>
+        <div class="big-stat"><span id="weekDistance">0.00</span> <span style="font-size:16px">km</span></div>
+        <div class="muted" id="weekRuns">0 sortie enregistrée</div>
+      </div>
+    </section>
+
+    <section class="page" id="page-history">
+      <div class="card">
+        <div class="section-title">
+          <h2>📚 Historique</h2>
+          <button onclick="exportHistory()">Exporter JSON</button>
+        </div>
+        <div id="historyList"></div>
+      </div>
+    </section>
+
+    <section class="page" id="page-stats">
+      <div class="card">
+        <div class="section-title"><h2>📊 Tes statistiques</h2></div>
+        <div class="muted">Distance totale enregistrée</div>
+        <div class="big-stat"><span id="totalDistance">0.00</span> km</div>
+        <div class="metrics">
+          <div class="metric">
+            <div class="value" id="totalRuns">0</div>
+            <div class="label">Sorties</div>
+          </div>
+          <div class="metric">
+            <div class="value" id="bestDistance">0.00</div>
+            <div class="label">Plus longue (km)</div>
+          </div>
+          <div class="metric">
+            <div class="value" id="totalTime">0 h</div>
+            <div class="label">Temps cumulé</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>🏁 Ton évolution</h2>
+        <p class="notice">Chaque sortie compte. Avance à ton rythme, augmente progressivement la distance et prends des pauses si nécessaire.</p>
+      </div>
+    </section>
+
+    <section class="page" id="page-settings">
+      <div class="card">
+        <h2>⚙️ Paramètres</h2>
+        <div class="settings-row">
+          <span>Objectif de distance</span>
+          <select id="settingsGoal" onchange="setGoal(Number(this.value))">
+            <option value="1">1 km</option>
+            <option value="3">3 km</option>
+            <option value="5">5 km</option>
+            <option value="10">10 km</option>
+          </select>
+        </div>
+        <div class="settings-row">
+          <span>Unités</span>
+          <span class="muted">Kilomètres · min/km</span>
+        </div>
+        <div class="settings-row">
+          <span>Historique</span>
+          <button onclick="exportHistory()">Exporter</button>
+        </div>
+        <div style="margin-top:20px">
+          <button class="danger" style="width:100%" onclick="clearHistory()">Effacer l'historique</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>ℹ️ À savoir</h2>
+        <p class="notice">
+          • Autorise la localisation pour mesurer tes sorties.<br>
+          • Le GPS fonctionne généralement sur une page HTTPS.<br>
+          • Sur iPhone, garde Safari ouvert pendant le suivi : le GPS peut s'interrompre lorsque l'écran est verrouillé.<br>
+          • Les données de tes sorties sont enregistrées localement dans ton navigateur.<br>
+          • RunFlow n'est pas une application médicale.
+        </p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<nav class="tabs">
+  <button class="tab active" onclick="showPage('home',this)"><span>⌂</span>Accueil</button>
+  <button class="tab" onclick="showPage('history',this)"><span>◷</span>Historique</button>
+  <button class="tab" onclick="showPage('stats',this)"><span>▥</span>Stats</button>
+  <button class="tab" onclick="showPage('settings',this)"><span>⚙</span>Réglages</button>
+</nav>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  const $ = id => document.getElementById(id);
+
+  let running = false;
+  let paused = false;
+  let watchId = null;
+  let startTime = 0;
+  let elapsedBeforePause = 0;
+  let timerId = null;
+  let lastPosition = null;
+  let distanceMeters = 0;
+  let goalKm = 1;
+  let points = [];
+
+  let history = [];
+  try {
+    history = JSON.parse(localStorage.getItem("runflow_history") || "[]");
+    if (!Array.isArray(history)) history = [];
+  } catch {
+    history = [];
+  }
+
+  function saveHistory() {
+    try {
+      localStorage.setItem("runflow_history", JSON.stringify(history));
+    } catch {
+      toast("Impossible de sauvegarder : stockage indisponible.");
+    }
+  }
+
+  function toast(message) {
+    const el = $("toast");
+    el.textContent = message;
+    el.style.display = "block";
+    clearTimeout(toast.timeout);
+    toast.timeout = setTimeout(() => el.style.display = "none", 3000);
+  }
+
+  function showPage(name, button) {
+    document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+    document.querySelectorAll(".tab").forEach(b => b.classList.remove("active"));
+    $("page-" + name).classList.add("active");
+    if (button) button.classList.add("active");
+    renderHistory();
+    renderStats();
+  }
+
+  function formatTime(seconds) {
+    seconds = Math.max(0, Math.floor(seconds));
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    return h > 0
+      ? String(h).padStart(2,"0") + ":" + String(m).padStart(2,"0") + ":" + String(s).padStart(2,"0")
+      : String(m).padStart(2,"0") + ":" + String(s).padStart(2,"0");
+  }
+
+  function formatPace(seconds, km) {
+    if (km < 0.01 || seconds <= 0) return "--:--";
+    const pace = Math.floor(seconds / km);
+    return Math.floor(pace / 60) + ":" + String(pace % 60).padStart(2,"0");
+  }
+
+  function elapsedSeconds() {
+    return running && !paused
+      ? elapsedBeforePause + (Date.now() - startTime) / 1000
+      : elapsedBeforePause;
+  }
+
+  function updateDisplay() {
+    const km = distanceMeters / 1000;
+    const seconds = elapsedSeconds();
+    const speed = seconds > 0 ? km / (seconds / 3600) : 0;
+
+    $("distance").textContent = km.toFixed(2);
+    $("elapsed").textContent = formatTime(seconds);
+    $("pace").textContent = formatPace(seconds, km);
+    $("speed").textContent = speed.toFixed(1);
+
+    const percent = Math.min(100, km / goalKm * 100);
+    $("goalBar").style.width = percent + "%";
+    $("goalProgress").textContent = Math.floor(percent) + " % atteint";
+    $("goalText").textContent = "Objectif : " + goalKm + " km";
+    $("pointCount").textContent = points.length + " points GPS";
+
+    if (km >= goalKm) {
+      $("runMessage").textContent = "🎉 Objectif atteint ! Continue seulement si tu te sens bien.";
+    } else if (running && !paused) {
+      $("runMessage").textContent = "Course en cours — garde ton rythme.";
+    } else if (paused) {
+      $("runMessage").textContent = "Course en pause.";
+    } else {
+      $("runMessage").textContent = "Prêt pour ta prochaine sortie ?";
+    }
+
+    updateRoute();
+  }
+
+  function setButtons() {
+    $("startBtn").disabled = running;
+    $("pauseBtn").disabled = !running;
+    $("finishBtn").disabled = !running;
+    $("pauseBtn").textContent = paused ? "▶ Reprendre" : "Ⅱ Pause";
+  }
+
+  function startRun() {
+    if (running) return;
+
+    if (!navigator.geolocation) {
+      toast("La géolocalisation n'est pas disponible dans ce navigateur.");
+      return;
+    }
+
+    if (!window.isSecureContext) {
+      toast("Le GPS nécessite une page HTTPS.");
+      return;
+    }
+
+    running = true;
+    paused = false;
+    startTime = Date.now();
+    lastPosition = null;
+    $("gpsStatus").textContent = "● Recherche GPS";
+    setButtons();
+
+    timerId = setInterval(updateDisplay, 500);
+
+    watchId = navigator.geolocation.watchPosition(
+      onPosition,
+      onPositionError,
+      {
+        enableHighAccuracy: true,
+        maximumAge: 1000,
+        timeout: 15000
+      }
+    );
+
+    toast("Course démarrée. Attente du GPS…");
+  }
+
+  function onPosition(position) {
+    if (!running || paused) return;
+
+    const current = {
+      lat: position.coords.latitude,
+      lon: position.coords.longitude,
+      accuracy: position.coords.accuracy,
+      time: position.timestamp || Date.now()
+    };
+
+    $("gpsStatus").textContent =
+      current.accuracy > 40 ? "● GPS imprécis" : "● GPS actif";
+
+    // Ignore les positions trop imprécises.
+    if (current.accuracy > 50) {
+      toast("Signal GPS faible. Place-toi si possible dans un espace dégagé.");
+      return;
+    }
+
+    if (lastPosition) {
+      const meters = haversine(
+        lastPosition.lat, lastPosition.lon,
+        current.lat, current.lon
+      );
+
+      const timeDiff = Math.max(1, (current.time - lastPosition.time) / 1000);
+      const maxPlausible = timeDiff * 8 + lastPosition.accuracy + current.accuracy;
+
+      // Filtre les sauts GPS aberrants.
+      if (meters > 2 && meters < maxPlausible) {
+        distanceMeters += meters;
+        points.push(current);
+      }
+    } else {
+      points.push(current);
+    }
+
+    lastPosition = current;
+    updateDisplay();
+  }
+
+  function onPositionError(error) {
+    const messages = {
+      1: "Autorise la localisation dans les réglages de ton iPhone.",
+      2: "Position GPS indisponible. Réessaie dans un endroit dégagé.",
+      3: "Le GPS met trop de temps à répondre. Réessaie."
+    };
+
+    $("gpsStatus").textContent = "● GPS indisponible";
+    toast(messages[error.code] || "Erreur GPS.");
+  }
+
+  function haversine(lat1, lon1, lat2, lon2) {
+    const R = 6371000;
+    const rad = value => value * Math.PI / 180;
+    const dLat = rad(lat2 - lat1);
+    const dLon = rad(lon2 - lon1);
+    const a =
+      Math.sin(dLat / 2) ** 2 +
+      Math.cos(rad(lat1)) * Math.cos(rad(lat2)) *
+      Math.sin(dLon / 2) ** 2;
+
+    return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  function pauseRun() {
+    if (!running) return;
+
+    if (!paused) {
+      elapsedBeforePause += (Date.now() - startTime) / 1000;
+      paused = true;
+      lastPosition = null;
+      $("gpsStatus").textContent = "● En pause";
+    } else {
+      paused = false;
+      startTime = Date.now();
+      $("gpsStatus").textContent = "● GPS actif";
+    }
+
+    setButtons();
+    updateDisplay();
+  }
+
+  function finishRun() {
+    if (!running) return;
+
+    const duration = Math.round(elapsedSeconds());
+    const km = distanceMeters / 1000;
+
+    stopTracking();
+
+    if (km < 0.01) {
+      toast("Sortie terminée, mais la distance GPS est trop faible pour être enregistrée.");
+      resetRun();
+      return;
+    }
+
+    const session = {
+      id: Date.now(),
+      date: new Date().toISOString(),
+      distance: Number(km.toFixed(3)),
+      duration,
+      pace: formatPace(duration, km),
+      points: points.length
+    };
+
+    history.unshift(session);
+    saveHistory();
+    renderHistory();
+    renderStats();
+    updateWeekly();
+
+    toast("Sortie enregistrée : " + km.toFixed(2) + " km !");
+    resetRun();
+  }
+
+  function stopTracking() {
+    running = false;
+    paused = false;
+
+    if (watchId !== null) {
+      navigator.geolocation.clearWatch(watchId);
+      watchId = null;
+    }
+
+    clearInterval(timerId);
+    timerId = null;
+
+    $("gpsStatus").textContent = "● GPS prêt";
+    setButtons();
+  }
+
+  function resetRun() {
+    if (running) stopTracking();
+
+    distanceMeters = 0;
+    elapsedBeforePause = 0;
+    lastPosition = null;
+    points = [];
+
+    updateDisplay();
+    setButtons();
+    $("gpsStatus").textContent = "● GPS prêt";
+    $("runMessage").textContent = "Prêt pour ta prochaine sortie ?";
+  }
+
+  function setGoal(km) {
+    goalKm = km;
+    document.querySelectorAll(".goal").forEach(button => {
+      button.classList.toggle("active", Number(button.dataset.goal) === km);
+    });
+    $("settingsGoal").value = String(km);
+    updateDisplay();
+  }
+
+  function updateRoute() {
+    const line = $("routeLine");
+    const dot = $("routeDot");
+    const placeholder = $("routePlaceholder");
+
+    if (points.length < 2) {
+      line.setAttribute("d", "");
+      dot.setAttribute("opacity", "0");
+      placeholder.setAttribute("opacity", "1");
+      return;
+    }
+
+    const lats = points.map(p => p.lat);
+    const lons = points.map(p => p.lon);
+    const minLat = Math.min(...lats);
+    const maxLat = Math.max(...lats);
+    const minLon = Math.min(...lons);
+    const maxLon = Math.max(...lons);
+
+    const latRange = maxLat - minLat || 0.00001;
+    const lonRange = maxLon - minLon || 0.00001;
+
+    const coords = points.map(p => ({
+      x: 20 + ((p.lon - minLon) / lonRange) * 300,
+      y: 20 + ((maxLat - p.lat) / latRange) * 140
+    }));
+
+    line.setAttribute(
+      "d",
+      coords.map((p, i) => (i === 0 ? "M" : "L") + p.x + " " + p.y).join(" ")
+    );
+
+    const last = coords[coords.length - 1];
+    dot.setAttribute("cx", last.x);
+    dot.setAttribute("cy", last.y);
+    dot.setAttribute("opacity", "1");
+    placeholder.setAttribute("opacity", "0");
+  }
+
+  function renderHistory() {
+    const list = $("historyList");
+
+    if (history.length === 0) {
+      list.innerHTML = '<div class="empty">Aucune sortie enregistrée pour le moment.<br>Ta première course apparaîtra ici.</div>';
+      return;
+    }
+
+    list.innerHTML = history.map(run => {
+      const date = new Date(run.date);
+      const dateText = date.toLocaleDateString("fr-FR", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric"
+      });
+
+      return `
+        <div class="history-item">
+          <div>
+            <div class="history-distance">${Number(run.distance).toFixed(2)} km</div>
+            <div class="history-date">${dateText}</div>
+          </div>
+          <div class="history-right">
+            <div>${formatTime(run.duration)}</div>
+            <div>${run.pace} /km</div>
+          </div>
+        </div>`;
+    }).join("");
+  }
+
+  function renderStats() {
+    const totalKm = history.reduce((sum, r) => sum + Number(r.distance), 0);
+    const totalSeconds = history.reduce((sum, r) => sum + Number(r.duration), 0);
+    const best = history.reduce((max, r) => Math.max(max, Number(r.distance)), 0);
+
+    $("totalDistance").textContent = totalKm.toFixed(2);
+    $("totalRuns").textContent = history.length;
+    $("bestDistance").textContent = best.toFixed(2);
+    $("totalTime").textContent = (totalSeconds / 3600).toFixed(1) + " h";
+
+    updateWeekly();
+  }
+
+  function updateWeekly() {
+    const now = new Date();
+    const startOfWeek = new Date(now);
+    const day = (now.getDay() + 6) % 7;
+
+    startOfWeek.setDate(now.getDate() - day);
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const weekly = history.filter(r => new Date(r.date) >= startOfWeek);
+    const km = weekly.reduce((sum, r) => sum + Number(r.distance), 0);
+
+    $("weekDistance").textContent = km.toFixed(2);
+    $("weekRuns").textContent =
+      weekly.length + (weekly.length > 1 ? " sorties enregistrées" : " sortie enregistrée");
+  }
+
+  function exportHistory() {
+    const data = {
+      app: "RunFlow",
+      exportedAt: new Date().toISOString(),
+      runs: history
+    };
+
+    const blob = new Blob([JSON.stringify(data, null, 2)], {
+      type: "application/json"
+    });
+
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "runflow-history.json";
+    link.click();
+    URL.revokeObjectURL(url);
+
+    toast("Export préparé.");
+  }
+
+  function clearHistory() {
+    if (!confirm("Effacer définitivement toutes les sorties enregistrées ?")) return;
+
+    history = [];
+    saveHistory();
+    renderHistory();
+    renderStats();
+    toast("Historique effacé.");
+  }
+
+  // Initialisation
+  setGoal(1);
+  updateDisplay();
+  setButtons();
+  renderHistory();
+  renderStats();
+</script>
+</body>
+</html>
